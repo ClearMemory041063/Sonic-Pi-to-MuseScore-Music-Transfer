@@ -4,55 +4,34 @@
 # 25 sep 2017
 # Bach's 2nd cousin plays chopsticks
 ## Helper functions
-################ ParseTune.rb
-# 22 Dec 2018 add code to export to a file for MuseScre
-# note on windows explorer
-# highlight the file
-# press shift and right click
-# select copy as path
-# paste the results here
-# change the '\' characters to '/'
-Path="C:/Users/jj/Documents/MuseScore2/Plugins/testtune.txt"
+outText=""
+rel=1.5
+amplitude= 0.3
+use_synth :fm
+ichord=[]
 
-#tuneTxt = File.open(Path, "r") {|io| io.read}
-#tuneTxt="3,8,60;1,4,-1;1,4,64;1,4,67;1,4,60,64,67;1,4,60;1,8,61;1,16,64;1,32,67;1,4,60,64,67
-#"
-# tuneTxt protocol
-# numerator,denominator,-1 for rest or positive midi pitch, more comma separated
-# midi pitches... and end the entry with a ';'
-# numerator =1, denominator=4 gives a 1/4 note
-# The pattern repeats for more notes, chords or rests
-#############
-nle=[0.25,0.25,0.125,0.25] # note length
+define :playit do|a|
+  ichord.push(a)
+end #playit
 
-## function to capture the tuneTxt
-tuneTxt=""
-def saveit(time,parray)
-  text=""
-  t1=1/time.to_f
-  t0=t1* time.to_f
-  #  puts "time= ",time,t0,t1
-  text+=t0.to_s+","+t1.to_s
+define :sleepit do |b|
+  denom=1/b
+  numer=b*denom
+  outText+=numer.to_s+","+denom.to_s
+  play(ichord,release: b*rel)
+  sleep b
   i=0
-  while i<parray.length
-    text+=","
-    if parray[i]== nil
-      parray[i]=-1
-    end
-    text+=parray[i].to_s
+  if ichord[0]==nil then ichord[0]=-1 end
+  while i<ichord.length
+    outText+=","+ichord[i].to_s
     i+=1
-  end
-  text+=";"
-  return text
-end #saveit
-#i=0
-#while i<nle.length
-#  tuneTxt+= saveit(nle[i],0)
-#  i+=1
-#end
-#puts tuneTxt
+  end #while i
+  outText+=";"
+  ichord=[]
+end #sleepit
 
-#########################################
+
+###############
 ## a function to copy a one dimensional array
 def array_copy(x)
   y=[]
@@ -223,17 +202,15 @@ define :test1 do |amplitude|
       while j< scal1.length
         nn=shiftOnScale(scal1[j],scal1,interval)
         puts midi2note(scal1[j]),midi2note(nn)
-        play(scal1[j])
-        tuneTxt+= saveit(0.25,[scal1[j],nn])
-        play(nn)
-        sleep 0.25
+        playit(scal1[j])
+        playit(nn)
+        sleepit 0.25
         j+=1
       end
       i+=1
     end
   end
 end #test1
-
 
 ##################################################################
 ## New Stuff
@@ -279,18 +256,18 @@ define :tune2 do |amplitude|
           v2b=shiftOnScale(v1b,keyscale,-interval)
           v3a=invertNote(ref,v1a,keyscale)
           v3b=invertNote(ref,v1b,keyscale)
-          play(v1a,release: nle[i]*rel)
-          play(v1b,release: nle[i]*rel)
+          playit(v1a) #,release: nle[i]*rel)
+          playit(v1b) #,release: nle[i]*rel)
           
           if(k>0)
-            play(v2a,release: nle[i]*rel)
-            play(v2b,release: nle[i]*rel)
+            playit(v2a) #,release: nle[i]*rel)
+            playit(v2b) #,release: nle[i]*rel)
           end
           if(k==2)
-            play(v3a,release: nle[i]*rel)
-            play(v3b,release: nle[i]*rel)
+            playit(v3a) #,release: nle[i]*rel)
+            playit(v3b) #,release: nle[i]*rel)
           end
-          sleep nle[i]
+          sleepit nle[i]
           i+=1
         end
         j+=1
@@ -299,41 +276,29 @@ define :tune2 do |amplitude|
       while j>0
         i=0
         while i<ks1.length
-          xx=[]
           v1=shiftOnScale(ks1.reverse[i],keyscale,j)
           v2=shiftOnScale(v1,keyscale,-interval) #-5)
           v3=invertNote(ref,v1,keyscale)
-          play(v1,release: nle[i]*rel)
-          xx.push(note(v1))
-          if(k>0)
-            play(v2,release: nle[i]*rel)
-            xx.push(note(v2))
-          end
-          if(k==2)
-            play(v3,release: nle[i]*rel)
-            xx.push(note(v3))
-          end
-          sleep nle[i]
-          tuneTxt+= saveit(nle[i],xx)
+          playit(v1) #,release: nle[i]*rel)
+          if(k>0)then playit(v2) end # ,release: nle[i]*rel)
+          if(k==2)then playit(v3) end # ,release: nle[i]*rel)
+          sleepit nle[i]
           i+=1
         end #next i
         j-=1
       end #next j
       puts keyscale
-      play(76,release: 0.25*rel)
-      sleep 0.25
-      tuneTxt+= saveit(0.25,[76])
-      play(72,release: 0.25*rel)
-      sleep 0.25
-      tuneTxt+= saveit(0.25,[72])
+      playit(76) #,release: 0.25*rel)
+      sleepit 0.25
+      playit(72) #,release: 0.25*rel)
+      sleepit 0.25
       k+=1
     end #next k
     i=0
     et=[0.25,0.25,0.25,0.25,0.25,0.25,0.25,0.5]
     while i<keyscale.length
-      play(keyscale[i],release: et[i]*rel)
-      sleep et[i]
-      tuneTxt+= saveit(et[i],[keyscale[i]])
+      playit(keyscale[i]) #,release: et[i]*rel)
+      sleepit et[i]
       i+=1
     end
     
@@ -352,6 +317,7 @@ puts invertNote(:C4,:r,keyscale)
 puts invertNote(:r,:r,keyscale)
 puts invertNote(:C4,:G4,keyscale)
 
-play(:r)
-sleep 0.25
-puts tuneTxt
+playit(:r)
+sleepit 0.25
+
+puts "ot= "+outText
