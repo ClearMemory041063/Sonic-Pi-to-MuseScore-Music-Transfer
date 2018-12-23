@@ -2,6 +2,9 @@
 
 #### A simple text file protocol
 
+![alt text](https://github.com/ClearMemory041063/Sonic-Pi-to-MuseScore-Music-Transfer/blob/master/Screenshot.png " ")
+
+
 Noteitems are inserted into a text file.
 A noteitem has the following format:
 A series of comma separated integer numbers
